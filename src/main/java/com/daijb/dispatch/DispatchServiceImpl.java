@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.net.InetAddress;
@@ -44,6 +45,7 @@ public class DispatchServiceImpl implements DispatchService {
             public void run() {
                 try {
                     logger.info("------------------");
+                    logger.info("addr : " + addr + ", area id : " + areaId);
                     startThreadFunc0(addr, areaId, false);
                 } catch (Throwable throwable) {
                     logger.error("task timer schedule failed ", throwable);
@@ -63,7 +65,7 @@ public class DispatchServiceImpl implements DispatchService {
         searchAsset(areaId);
         int len = 1;
         if (isFirst) {
-            len = 50;
+            len = 3;
         }
         for (int i = 0; i < len; i++) {
             try {
@@ -78,6 +80,52 @@ public class DispatchServiceImpl implements DispatchService {
         }
     }
 
+    /**
+     * {
+     * "SrcRealIP":"",
+     * "SHA1":"22bff02f4581f6893524e91c3f0bf65fe7d113d2",
+     * "L7P":"HTTP",
+     * "Time":"1614591453000",
+     * "rID":"622f15ff5023bced451a95372fdc2f76",
+     * "Direction":"0",
+     * "URL":"192.168.3.12/zentao/product-ajaxGetDropMenu-3-testcase-browse-.html",
+     * "Name":"product-ajaxGetDropMenu-3-testcase-browse-.html",
+     * "TrtFmly":0,
+     * "EngTrtType":[
+     * <p>
+     * ],
+     * "ResponseCode":200,
+     * "SrcPort":"51111",
+     * "EngTrtName":[
+     * <p>
+     * ],
+     * "EngID":[
+     * <p>
+     * ],
+     * "FileSource":"0",
+     * "EngTrtFmly":[
+     * <p>
+     * ],
+     * "EngTrtDesc":[
+     * <p>
+     * ],
+     * "DstPort":"80",
+     * "SrcIP":"172.16.2.130",
+     * "TrtType":0,
+     * "FlowID":"75416766d5394e3258fdd0ce3177d9f9-0001",
+     * "VLANID":1344,
+     * "SHA256":"78f7751aa414410f399aa04f0870d777420feeafabb72b8a40336d2003dafd85",
+     * "FileType":"html",
+     * "TrtLevel":0,
+     * "DstIP":"192.168.3.12",
+     * "DstMAC":"bc:3f:8f:63:6c:80",
+     * "EngTrtLevel":[
+     * <p>
+     * ],
+     * "SrcMAC":"14:a0:f8:9b:5c:82",
+     * "MD5":"4c1544c8656e1e0f9451f25694edc82d"
+     * }
+     */
     private void sendFileCheck(String host) throws UnknownHostException {
         logger.info("开始发送文件检测事件......");
 
@@ -98,28 +146,36 @@ public class DispatchServiceImpl implements DispatchService {
         JSONArray body = new JSONArray();
 
         JSONObject bodyItem = new JSONObject();
-        bodyItem.put("rID", UUID.randomUUID().toString().replaceAll("-", ""));
-        bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
-        bodyItem.put("SrcMAC", "");
-        bodyItem.put("SrcIP", srcIP);
-        bodyItem.put("SrcPort", 0);
-        bodyItem.put("DstMAC", "");
-        bodyItem.put("DstIP", dstIP);
-        bodyItem.put("DstPort", 0);
-        bodyItem.put("L7P", "FTP");
-        bodyItem.put("Name", "1.html");
-        bodyItem.put("FileType", "html");
-        bodyItem.put("URL", "192.168.3.188/api/v1/clusters/BlueSky/requests?to=end&page_size=10&fields=Requests&_=1613626876005");
-        bodyItem.put("MD5", "62b0a8771a4c8920acba780f9480652e");
+
+        bodyItem.put("SrcRealIP", "");
         bodyItem.put("SHA1", "37c58a0d2c039a3b33bbfeb3f06158fb23e8c711");
-        bodyItem.put("SHA256", "f4c0d9d35f3ff617ed77d5d558600e140ca49634eae56a19a402e90755768820");
+        bodyItem.put("L7P", "HTTP");
+        bodyItem.put("Time", "1614591453000");
+        bodyItem.put("rID", UUID.randomUUID().toString().replaceAll("-", ""));
         bodyItem.put("Direction", 0);
-        bodyItem.put("TrtType", 3);
-        bodyItem.put("TrtLevel", 3);
-        bodyItem.put("EngID", Arrays.asList("Windows", "AV", "Windows", "Windows"));
-        bodyItem.put("TrtFmly", 2);
-        bodyItem.put("TrtName", "ADWARE/Adware.Gen");
-        bodyItem.put("TrtDesc", "可疑广告弹窗软件Contains virus patterns of Adware ADWARE/Adware.Gen");
+        bodyItem.put("URL", "192.168.3.12/zentao/product-ajaxGetDropMenu-3-testcase-browse-.html");
+        bodyItem.put("Name", "product-ajaxGetDropMenu-3-testcase-browse-.html");
+        bodyItem.put("TrtFmly", 0);
+        bodyItem.put("EngTrtType", new JSONArray());
+        bodyItem.put("ResponseCode", 200);
+        bodyItem.put("SrcPort", 51111);
+        bodyItem.put("EngTrtFmly", new JSONArray());
+        bodyItem.put("EngTrtDesc", new JSONArray());
+        bodyItem.put("DstPort", 80);
+        bodyItem.put("SrcIP", getRandomIp());
+        bodyItem.put("TrtType", 0);
+        bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
+        bodyItem.put("VLANID", "1344");
+        bodyItem.put("SHA256", "f4c0d9d35f3ff617ed77d5d558600e140ca49634eae56a19a402e90755768820");
+        bodyItem.put("FileType", "html");
+        bodyItem.put("TrtLevel", 4);
+        bodyItem.put("DstIP", dstIP);
+        bodyItem.put("DstMAC", "bc:3f:8f:63:6c:80");
+        JSONArray trtLevel = new JSONArray();
+        trtLevel.add(4);
+        bodyItem.put("EngTrtLevel", trtLevel);
+        bodyItem.put("SrcMAC", "14:a0:f8:9b:5c:82");
+        bodyItem.put("MD5", "62b0a8771a4c8920acba780f9480652e");
 
 
         body.add(bodyItem);
@@ -127,6 +183,7 @@ public class DispatchServiceImpl implements DispatchService {
 
         item.add(data);
 
+        logger.info(LogType.csp_filechecking.name() + "send data json : " + item);
         String[] commands = new String[]{"curl", "--connect-timeout", "10", "-i", "-H", "\"Content-Type: application/json; charset=UTF-8\"", "-d", item.toJSONString(), "-k1", host};
         try {
             SystemUtil.execute(commands);
@@ -135,6 +192,31 @@ public class DispatchServiceImpl implements DispatchService {
         }
     }
 
+    /**
+     * {
+     * "ReqType":"application/octet-stream",
+     * "SrcPort":53279,
+     * "User-Agent":"MicroMessenger Client",
+     * "Time":1614591195513,
+     * "Host":"extshort.weixin.qq.com",
+     * "DstPort":80,
+     * "Method":"POST",
+     * "RespLength":229,
+     * "SrcIP":"192.168.7.171",
+     * "StatusCode":200,
+     * "URL":"/mmtls/00001e98",
+     * "RespType":"application/octet-stream",
+     * "FlowID":"c5173a063a566908e87720695e4141c7-0001",
+     * "VLANID":3923,
+     * "ReqLength":490,
+     * "Proxy":"no",
+     * "DstIP":"112.65.193.167",
+     * "DstMAC":"bc:3f:8f:63:6c:80",
+     * "TrafficSource":"eth1",
+     * "Protocol":"HTTP",
+     * "SrcMAC":"00:0e:c6:b9:d4:81"
+     * }
+     */
     private void sendHttp(String host) throws UnknownHostException {
         logger.info("开始发送http事件......");
 
@@ -155,26 +237,35 @@ public class DispatchServiceImpl implements DispatchService {
         JSONArray body = new JSONArray();
 
         JSONObject bodyItem = new JSONObject();
-        bodyItem.put("FlowID", "44e5ce469a5e26e0055e1097f4aa2cc5-0001");
-        bodyItem.put("Protocol", "HTTP");
-        bodyItem.put("SrcIP", srcIP);
-        bodyItem.put("SrcPort", 4088);
-        bodyItem.put("DstIP", dstIP);
+
+        bodyItem.put("ReqType", "application/octet-stream");
+        bodyItem.put("SrcPort", 53279);
+        bodyItem.put("User-Agent", "MicroMessenger Client");
+        bodyItem.put("Time", "1614591195513");
+        bodyItem.put("Host", "extshort.weixin.qq.com");
         bodyItem.put("DstPort", 80);
-        bodyItem.put("Method", "GET");
-        bodyItem.put("URL", "message/updateTime?tags=commontags&updateTime=d751713988987e9331980363e24189ce1513215818070");
-        bodyItem.put("Host", "api.foxitreader.cn");
-        bodyItem.put("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/7.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E; InfoPath.3)");
-        bodyItem.put("Proxy", "no");
+        bodyItem.put("Method", "POST");
+        bodyItem.put("RespLength", 329);
+        bodyItem.put("SrcIP", getRandomIp());
         bodyItem.put("StatusCode", 200);
-        bodyItem.put("RespLength", 1026);
+        bodyItem.put("URL", "/mmtls/00001e98");
+        bodyItem.put("RespType", "application/octet-stream");
+        bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
+        bodyItem.put("VLANID", 3923);
+        bodyItem.put("ReqLength", 1026);
+        bodyItem.put("Proxy", "no");
+        bodyItem.put("DstIP",dstIP);
+        bodyItem.put("DstMAC", "bc:3f:8f:63:6c:80");
+        bodyItem.put("TrafficSource", "eth1");
+        bodyItem.put("Protocol", "HTTP");
+        bodyItem.put("SrcMAC", "00:0e:c6:b9:d4:81");
 
 
         body.add(bodyItem);
         data.put("body", body);
 
         item.add(data);
-
+        logger.info(LogType.csp_http.name() + "send data json : " + item);
         String[] commands = new String[]{"curl", "--connect-timeout", "10", "-i", "-H", "\"Content-Type: application/json; charset=UTF-8\"", "-d", item.toJSONString(), "-k1", host};
         try {
             SystemUtil.execute(commands);
@@ -183,6 +274,23 @@ public class DispatchServiceImpl implements DispatchService {
         }
     }
 
+    /**
+     * {
+     * "Time":"1614591225000",
+     * "rID":"34941",
+     * "SrcIP":"192.168.7.220",
+     * "Name":"41",
+     * "VLANID":3748,
+     * "FlowID":"0847a3e2f5eff231bb27ca0c7fc42ad8-0001",
+     * "Desc":"{"TDOMAIN":"pub.idqqimg.com","DESC":"malware"}",
+     * "DstIP":"192.168.3.8",
+     * "DstMAC":"bc:3f:8f:63:6c:80",
+     * "Level":"2",
+     * "TrafficSource":"eth1",
+     * "RepType":"4",
+     * "SrcMAC":"54:ab:3a:6a:d4:ba"
+     * }
+     */
     private void sendTi(String host) throws UnknownHostException {
         logger.info("开始发送威胁情报事件......");
 
@@ -203,19 +311,25 @@ public class DispatchServiceImpl implements DispatchService {
         JSONArray body = new JSONArray();
 
         JSONObject bodyItem = new JSONObject();
+        bodyItem.put("Time", System.currentTimeMillis());
         bodyItem.put("rID", UUID.randomUUID().toString().replaceAll("-", ""));
-        bodyItem.put("RepType", 3);
-        bodyItem.put("Level", 3);
-        bodyItem.put("Name", "rdata");
-        bodyItem.put("SrcIP", srcIP);
+        bodyItem.put("SrcIP", getRandomIp());
+        bodyItem.put("Name", "41");
+        bodyItem.put("VLANID", 3748);
+        bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
+        bodyItem.put("Desc", "\"{\"TDOMAIN\":\"pub.idqqimg.com\",\"DESC\":\"malware\"}\",");
         bodyItem.put("DstIP", dstIP);
-        bodyItem.put("Desc", "{\"TIP\":" + dstIP + "}");
+        bodyItem.put("DstMAC", "bc:3f:8f:63:6c:80");
+        bodyItem.put("Level", 5);
+        bodyItem.put("TrafficSource", "eth1");
+        bodyItem.put("RepType", "4");
+        bodyItem.put("SrcMAC", "54:ab:3a:6a:d4:ba");
 
         body.add(bodyItem);
         data.put("body", body);
 
         item.add(data);
-
+        logger.info(LogType.csp_ti.name() + "send data json : " + item);
         String[] commands = new String[]{"curl", "--connect-timeout", "10", "-i", "-H", "\"Content-Type: application/json; charset=UTF-8\"", "-d", item.toJSONString(), "-k1", host};
         try {
             SystemUtil.execute(commands);
@@ -244,10 +358,12 @@ public class DispatchServiceImpl implements DispatchService {
         JSONArray body = new JSONArray();
 
         JSONObject bodyItem = new JSONObject();
+
+        bodyItem.put("AlterType","BackDoor_spy");
         bodyItem.put("rID", UUID.randomUUID().toString().replaceAll("-", ""));
         bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
         bodyItem.put("SrcMAC", "00:0c:29:de:85:9a");
-        bodyItem.put("SrcIP", srcIP);
+        bodyItem.put("SrcIP", getRandomIp());
         bodyItem.put("SrcPort", 51486);
         bodyItem.put("DstMAC", "bc:3f:8f:63:6c:80");
         bodyItem.put("DstIP", dstIP);
@@ -261,7 +377,7 @@ public class DispatchServiceImpl implements DispatchService {
         bodyItem.put("SHA256", "1ab1c4642217ccd82b1b64df890291f7adc56cc0b7ef294e9fef0fc1e7286938");
         bodyItem.put("Direction", 0);
         bodyItem.put("TrtType", 0);
-        bodyItem.put("TrtLevel", 3);
+        bodyItem.put("TrtLevel", 4);
         bodyItem.put("EngID", Arrays.asList("Windows", "AV", "Windows", "Windows"));
         bodyItem.put("TrtFmly", 2);
         bodyItem.put("TrtName", "ADWARE/Adware.Gen");
@@ -272,6 +388,7 @@ public class DispatchServiceImpl implements DispatchService {
 
         item.add(data);
 
+        logger.info(LogType.csp_malware.name() + "send data json : " + item);
         String[] commands = new String[]{"curl", "--connect-timeout", "10", "-i", "-H", "\"Content-Type: application/json; charset=UTF-8\"", "-d", item.toJSONString(), "-k1", host};
         try {
             SystemUtil.execute(commands);
@@ -281,8 +398,28 @@ public class DispatchServiceImpl implements DispatchService {
     }
 
     /**
-     * 发送网络威胁事件
-     * curl --connect-timeout 10 -i -H "Content-Type: application/json; charset=UTF-8" -d '[{"headers":{"LogVer":2,"LogType":"csp_malware","rHost":"192.168.7.24","rTime":"1545190200000"},"body":[{"rID":"001c109d2b1a8c7e1412a7","FlowID":"001c109d2b1a8c7e1412a713ae0a8c57","SrcMAC":"","SrcIP":"192.168.5.2","SrcPort":"41075","DstMAC":"","DstIP":"192.168.5.2","DstPort":"80","L7P":"HTTP","Name":"1db6fa0c3661a57816a827d693f3c3f0d86570e7.bin","FileType":"exe","URL":"192.168.3.7/pe/1db6fa0c3661a57816a827d693f3c3f0d86570e7.bin","MD5":"edca6c38794e9fbf52093f297bf636d1","SHA1":"1db6fa0c3661a57816a827d693f3c3f0d86570e7","SHA256":"17a657c649c3c41a89cc71d0a5bfd389ee38887ee454b965e6c6e70c0bef03bc","Direction":"0","TrtType":0,"TrtLevel":3,"EngID":"AV","TrtFmly":9,"TrtName":"ADWARE/Adware.Gen","TrtDesc":" 可疑广告弹窗软件Contains virus patterns of Adware ADWARE/Adware.Gen","Time":"1545190200000"}]}]' -k1 https://192.168.9.162:5144
+     * 发送网络威胁事件csp_netthreat
+     * <p>
+     * {
+     * "SrcPort":3306,
+     * "TrtID":4200305,
+     * "Time":"1614591923011",
+     * "DstPort":52827,
+     * "rID":"",
+     * "SrcIP":"192.168.9.148",
+     * "Direction":0,
+     * "TrtType":420,
+     * "FlowID":"abcc25995cb61ab76242103440af1832",
+     * "VLANID":0,
+     * "TrtLevel":1,
+     * "DstIP":"192.168.8.166",
+     * "DstMAC":"84:c5:a6:f2:8e:56",
+     * "TrtName":"MySQL Server respond OK",
+     * "TrafficSource":"eth1",
+     * "PtlType":"TCP",
+     * "SrcMAC":"bc:3f:8f:63:6c:80",
+     * "Dataflow":"BwAAAQAAAAIAAAABAAABCFAAAAIDZGVmEmluZm9ybWF0aW9uX3NjaGVtYQh0cmlnZ2VycwhUUklHR0VSUwxBQ1RJT05fR0VSUw1BQ1RJT05fVElNSU5HDUFDVElPTl9USU1JTkcMLQAYAAAA/QEAAAAABQAACv4AACIABQAAC/4AACIA"
+     * }
      */
     private void sendNetThreat(String host) throws UnknownHostException {
         logger.info("开始发送网络威胁事件......");
@@ -304,26 +441,39 @@ public class DispatchServiceImpl implements DispatchService {
 
         JSONObject bodyItem = new JSONObject();
 
-        bodyItem.put("rID", UUID.randomUUID().toString().replaceAll("-", ""));
+        if (srcIP.length() % 2 == 0) {
+            bodyItem.put("AlterType", "Tool_Muieblackcat");
+        } else {
+            bodyItem.put("AlterType", "Tunnel_HTTP");
+        }
+        if (dstIP.length() % 3 == 0) {
+            bodyItem.put("AlterType", "Leak_ShellCode");
+        }
+        bodyItem.put("SrcPort", 3306);
+        bodyItem.put("TrtID", 4200305);
+        bodyItem.put("Time", "1614591923011");
+        bodyItem.put("DstPort", 52827);
+        bodyItem.put("rID", "");
+        bodyItem.put("SrcIP", getRandomIp());
+        bodyItem.put("Direction", 0);
+        bodyItem.put("TrtType", 420);
         bodyItem.put("FlowID", UUID.randomUUID().toString().replaceAll("-", ""));
-        bodyItem.put("SrcIP", srcIP);
-        bodyItem.put("SrcPort", 53211);
+        bodyItem.put("VLANID", 0);
+        bodyItem.put("TrtLevel", 4);
         bodyItem.put("DstIP", dstIP);
-        bodyItem.put("DstPort", 8080);
-        bodyItem.put("Dataflow", "SElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmc");
-        bodyItem.put("Direction", 1);
+        bodyItem.put("DstMAC", "84:c5:a6:f2:8e:56");
+        bodyItem.put("TrtName", "MySQL Server respond OK");
+        bodyItem.put("TrafficSource", "eth1");
         bodyItem.put("PtlType", "TCP");
-        bodyItem.put("TrtID", 5000003);
-        bodyItem.put("TrtType", 69);
-        bodyItem.put("TrtLevel", 3);
-        bodyItem.put("TrtName", "针对火眼红队黑客工具利用检测(User32LogonProcesss)");
+        bodyItem.put("SrcMAC", "bc:3f:8f:63:6c:80");
+        bodyItem.put("Dataflow", "BwAAAQAAAAIAAAABAAABCFAAAAIDZGVmEmluZm9ybWF0aW9uX3NjaGVtYQh0cmlnZ2VycwhUUklHR0VSUwxBQ1RJT05fR0VSUw1BQ1RJT05fVElNSU5HDUFDVElPTl9USU1JTkcMLQAYAAAA");
 
 
         body.add(bodyItem);
         data.put("body", body);
 
         item.add(data);
-
+        logger.info(LogType.csp_netthreat.name() + "send data json : " + item);
         String[] commands = new String[]{"curl", "--connect-timeout", "10", "-i", "-H", "\"Content-Type: application/json; charset=UTF-8\"", "-d", item.toJSONString(), "-k1", host};
         try {
             SystemUtil.execute(commands);
@@ -338,11 +488,13 @@ public class DispatchServiceImpl implements DispatchService {
         if (areaId != null) {
             querySql = querySql + " where area_id ='" + areaId + "'";
         }
+        logger.info("search query expr : " + querySql);
         List<Map<String, Object>> maps = jdbcTemplate.queryForList(querySql);
         for (Map<String, Object> asset : maps) {
             String assetIp = asset.get("asset_ip").toString();
             assetIps.add(getIps(assetIp));
         }
+        this.allAssetIps.clear();
         this.allAssetIps = assetIps;
     }
 
@@ -372,6 +524,63 @@ public class DispatchServiceImpl implements DispatchService {
         ds.setIdleConnectionTestPeriod(60);
         ds.setTestConnectionOnCheckout(true);
         return ds;
+    }
+
+
+    /**
+     * 随机生成国内IP地址
+     *
+     * @return
+     */
+    public String getRandomIp() {
+
+        //ip范围
+        int[][] range = {
+                //36.56.0.0-36.63.255.255
+                {607649792, 608174079},
+                //61.232.0.0-61.237.255.255
+                {1038614528, 1039007743},
+                //106.80.0.0-106.95.255.255
+                {1783627776, 1784676351},
+                //121.76.0.0-121.77.255.255
+                {2035023872, 2035154943},
+                //123.232.0.0-123.235.255.255
+                {2078801920, 2079064063},
+                //139.196.0.0-139.215.255.255
+                {-1950089216, -1948778497},
+                //171.8.0.0-171.15.255.255
+                {-1425539072, -1425014785},
+                //182.80.0.0-182.92.255.255
+                {-1236271104, -1235419137},
+                //210.25.0.0-210.47.255.255
+                {-770113536, -768606209},
+                //222.16.0.0-222.95.255.255
+                {-569376768, -564133889},
+        };
+
+        Random random = new Random();
+        int index = random.nextInt(10);
+        String ip = num2ip(range[index][0] + new Random().nextInt(range[index][1] - range[index][0]));
+        return ip;
+    }
+
+    /**
+     * 将十进制转换成ip地址
+     *
+     * @param ip
+     * @return
+     */
+    private String num2ip(int ip) {
+        int[] b = new int[4];
+        String x = "";
+
+        b[0] = (int) ((ip >> 24) & 0xff);
+        b[1] = (int) ((ip >> 16) & 0xff);
+        b[2] = (int) ((ip >> 8) & 0xff);
+        b[3] = (int) (ip & 0xff);
+        x = Integer.toString(b[0]) + "." + Integer.toString(b[1]) + "." + Integer.toString(b[2]) + "." + Integer.toString(b[3]);
+
+        return x;
     }
 
 }
